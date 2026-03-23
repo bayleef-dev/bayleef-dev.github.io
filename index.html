@@ -1,0 +1,1486 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Assignment 2 — AI for Engineering: The Data & Compute Reality Check</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0a0c10;
+  --bg2: #0f1219;
+  --surface: #161b26;
+  --surface2: #1e2535;
+  --border: #2a3346;
+  --accent: #00d4aa;
+  --accent2: #ff6b35;
+  --accent3: #7c5cfc;
+  --text: #e8edf5;
+  --text-dim: #8b95a8;
+  --text-dimmer: #4d5568;
+  --warn: #f59e0b;
+  --danger: #ef4444;
+  --success: #22c55e;
+  --mono: 'Space Mono', monospace;
+  --sans: 'DM Sans', sans-serif;
+  --display: 'Syne', sans-serif;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--sans);
+  font-size: 15px;
+  line-height: 1.7;
+  overflow-x: hidden;
+}
+
+/* ---- NOISE OVERLAY ---- */
+body::before {
+  content: '';
+  position: fixed; inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+  pointer-events: none; z-index: 9999; opacity: 0.4;
+}
+
+/* ---- SCROLLBAR ---- */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--accent); border-radius: 2px; }
+
+/* ---- NAV ---- */
+nav {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+  background: rgba(10,12,16,0.85);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 2rem; height: 56px;
+}
+.nav-brand {
+  font-family: var(--mono); font-size: 11px; color: var(--accent);
+  letter-spacing: 0.15em; text-transform: uppercase;
+}
+.nav-links {
+  display: flex; gap: 0.2rem; list-style: none;
+}
+.nav-links a {
+  font-family: var(--mono); font-size: 10px; color: var(--text-dim);
+  text-decoration: none; padding: 6px 10px; border-radius: 4px;
+  transition: all 0.2s; letter-spacing: 0.05em;
+}
+.nav-links a:hover, .nav-links a.active { color: var(--accent); background: rgba(0,212,170,0.08); }
+
+/* ---- HERO ---- */
+.hero {
+  min-height: 100vh; display: flex; align-items: center;
+  position: relative; overflow: hidden;
+  padding: 80px 0 60px;
+}
+.hero-grid {
+  position: absolute; inset: 0;
+  background-image:
+    linear-gradient(rgba(0,212,170,0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,212,170,0.04) 1px, transparent 1px);
+  background-size: 48px 48px;
+  mask-image: radial-gradient(ellipse at 50% 50%, black 30%, transparent 80%);
+}
+.hero-glow {
+  position: absolute; width: 600px; height: 600px; border-radius: 50%;
+  background: radial-gradient(circle, rgba(0,212,170,0.12) 0%, transparent 70%);
+  top: 50%; left: 50%; transform: translate(-50%,-50%);
+  animation: pulse 6s ease-in-out infinite;
+}
+@keyframes pulse { 0%,100%{opacity:0.6; transform:translate(-50%,-50%) scale(1)} 50%{opacity:1; transform:translate(-50%,-50%) scale(1.15)} }
+
+.hero-inner {
+  max-width: 1100px; margin: 0 auto; padding: 0 2rem;
+  position: relative; z-index: 2;
+}
+.hero-badge {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: rgba(0,212,170,0.08); border: 1px solid rgba(0,212,170,0.25);
+  color: var(--accent); font-family: var(--mono); font-size: 11px;
+  padding: 6px 14px; border-radius: 100px; margin-bottom: 2rem;
+  letter-spacing: 0.12em; animation: fadeUp 0.6s ease both;
+}
+.hero-badge .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); animation: blink 1.5s infinite; }
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.2} }
+
+.hero h1 {
+  font-family: var(--display); font-size: clamp(2.4rem, 5vw, 4.5rem);
+  font-weight: 800; line-height: 1.08; letter-spacing: -0.02em;
+  animation: fadeUp 0.7s 0.1s ease both;
+}
+.hero h1 .line2 { color: var(--accent); }
+.hero h1 .line3 { color: var(--text-dim); font-weight: 600; font-size: 0.7em; }
+
+.hero-sub {
+  margin-top: 1.5rem; max-width: 620px; color: var(--text-dim);
+  font-size: 1rem; animation: fadeUp 0.7s 0.2s ease both;
+}
+.hero-meta {
+  margin-top: 2.5rem; display: flex; gap: 2rem; flex-wrap: wrap;
+  animation: fadeUp 0.7s 0.3s ease both;
+}
+.hero-meta-item { display: flex; flex-direction: column; gap: 2px; }
+.hero-meta-label { font-family: var(--mono); font-size: 10px; color: var(--text-dimmer); letter-spacing: 0.1em; text-transform: uppercase; }
+.hero-meta-value { font-family: var(--mono); font-size: 13px; color: var(--text); }
+
+.hero-scroll {
+  position: absolute; bottom: 2rem; left: 50%; transform: translateX(-50%);
+  display: flex; flex-direction: column; align-items: center; gap: 8px;
+  color: var(--text-dimmer); font-family: var(--mono); font-size: 9px; letter-spacing: 0.15em;
+  animation: fadeIn 1s 1s both;
+}
+.hero-scroll .arrow { animation: bounce 1.5s infinite; }
+@keyframes bounce { 0%,100%{transform:translateY(0)} 50%{transform:translateY(5px)} }
+
+@keyframes fadeUp { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
+@keyframes fadeIn { from{opacity:0} to{opacity:1} }
+
+/* ---- SECTIONS ---- */
+section {
+  padding: 5rem 0;
+  position: relative;
+}
+.container { max-width: 1100px; margin: 0 auto; padding: 0 2rem; }
+
+.section-label {
+  font-family: var(--mono); font-size: 10px; color: var(--accent);
+  letter-spacing: 0.2em; text-transform: uppercase; margin-bottom: 0.5rem;
+}
+.section-title {
+  font-family: var(--display); font-size: clamp(1.6rem, 3vw, 2.4rem);
+  font-weight: 700; line-height: 1.2; margin-bottom: 1rem;
+}
+.section-desc { color: var(--text-dim); max-width: 560px; margin-bottom: 3rem; }
+
+/* ---- CARDS ---- */
+.card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 12px; padding: 1.75rem;
+  transition: border-color 0.2s, transform 0.2s, box-shadow 0.2s;
+}
+.card:hover {
+  border-color: var(--accent); transform: translateY(-2px);
+  box-shadow: 0 8px 40px rgba(0,212,170,0.08);
+}
+.card-label {
+  font-family: var(--mono); font-size: 10px; color: var(--accent);
+  letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 0.75rem;
+}
+.card h3 { font-family: var(--display); font-size: 1.1rem; font-weight: 700; margin-bottom: 0.75rem; }
+.card p { color: var(--text-dim); font-size: 0.9rem; }
+
+/* ---- GRID LAYOUTS ---- */
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; }
+.grid-3 { display: grid; grid-template-columns: repeat(3,1fr); gap: 1.25rem; }
+.grid-auto { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px,1fr)); gap: 1.25rem; }
+@media(max-width: 700px) { .grid-2, .grid-3 { grid-template-columns: 1fr; } }
+
+/* ---- SCENARIO BANNER ---- */
+.scenario-banner {
+  background: linear-gradient(135deg, rgba(0,212,170,0.08) 0%, rgba(124,92,252,0.08) 100%);
+  border: 1px solid rgba(0,212,170,0.2);
+  border-radius: 16px; padding: 2.5rem;
+  position: relative; overflow: hidden;
+}
+.scenario-banner::before {
+  content: '✈';
+  position: absolute; right: 2rem; top: 50%; transform: translateY(-50%);
+  font-size: 6rem; opacity: 0.06;
+}
+.scenario-banner h2 { font-family: var(--display); font-size: 1.4rem; font-weight: 700; margin-bottom: 0.75rem; }
+.scenario-banner p { color: var(--text-dim); max-width: 700px; line-height: 1.8; }
+
+/* ---- COMPARISON TABLE ---- */
+.comp-table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
+.comp-table th {
+  background: var(--surface2); padding: 0.75rem 1rem;
+  text-align: left; font-family: var(--mono); font-size: 10px;
+  color: var(--text-dim); letter-spacing: 0.1em; text-transform: uppercase;
+  border-bottom: 1px solid var(--border);
+}
+.comp-table td {
+  padding: 0.85rem 1rem; border-bottom: 1px solid var(--border);
+  color: var(--text-dim); vertical-align: top;
+}
+.comp-table tr:last-child td { border-bottom: none; }
+.comp-table tr:hover td { background: rgba(255,255,255,0.02); }
+.comp-table td:first-child { color: var(--text); font-weight: 500; }
+.badge {
+  display: inline-block; font-family: var(--mono); font-size: 10px;
+  padding: 2px 8px; border-radius: 100px; letter-spacing: 0.05em;
+}
+.badge-green { background: rgba(34,197,94,0.12); color: var(--success); border: 1px solid rgba(34,197,94,0.25); }
+.badge-orange { background: rgba(255,107,53,0.12); color: var(--accent2); border: 1px solid rgba(255,107,53,0.25); }
+.badge-purple { background: rgba(124,92,252,0.12); color: var(--accent3); border: 1px solid rgba(124,92,252,0.25); }
+.badge-cyan { background: rgba(0,212,170,0.12); color: var(--accent); border: 1px solid rgba(0,212,170,0.25); }
+.badge-red { background: rgba(239,68,68,0.12); color: var(--danger); border: 1px solid rgba(239,68,68,0.25); }
+
+/* ---- FORMULA BOX ---- */
+.formula {
+  background: var(--bg); border: 1px solid var(--border);
+  border-left: 3px solid var(--accent);
+  border-radius: 8px; padding: 1rem 1.25rem;
+  font-family: var(--mono); font-size: 0.85rem;
+  color: var(--accent); margin: 1rem 0; line-height: 1.6;
+}
+
+/* ---- INSIGHT BOX ---- */
+.insight {
+  background: rgba(0,212,170,0.05);
+  border: 1px solid rgba(0,212,170,0.2);
+  border-radius: 10px; padding: 1.25rem 1.5rem;
+  margin: 1.25rem 0;
+}
+.insight-label { font-family: var(--mono); font-size: 10px; color: var(--accent); letter-spacing: 0.15em; margin-bottom: 0.5rem; }
+.insight p { color: var(--text-dim); font-size: 0.9rem; }
+.insight strong { color: var(--text); }
+
+.warn-box {
+  background: rgba(245,158,11,0.06);
+  border: 1px solid rgba(245,158,11,0.25);
+  border-radius: 10px; padding: 1.25rem 1.5rem; margin: 1.25rem 0;
+}
+.warn-box-label { font-family: var(--mono); font-size: 10px; color: var(--warn); letter-spacing: 0.15em; margin-bottom: 0.5rem; }
+.warn-box p { color: var(--text-dim); font-size: 0.9rem; }
+
+/* ---- ARCHITECTURE DIAGRAM ---- */
+.arch-diagram {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 12px; padding: 2rem;
+  display: flex; flex-direction: column; gap: 1rem; align-items: center;
+}
+.arch-row { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
+.arch-node {
+  padding: 0.75rem 1.25rem; border-radius: 8px;
+  font-family: var(--mono); font-size: 11px; text-align: center;
+  border: 1px solid; line-height: 1.4;
+  transition: transform 0.2s;
+}
+.arch-node:hover { transform: scale(1.05); }
+.arch-node.gnn { background: rgba(124,92,252,0.1); border-color: rgba(124,92,252,0.4); color: #a78bfa; }
+.arch-node.transformer { background: rgba(0,212,170,0.1); border-color: rgba(0,212,170,0.4); color: var(--accent); }
+.arch-node.pinn { background: rgba(255,107,53,0.1); border-color: rgba(255,107,53,0.4); color: var(--accent2); }
+.arch-node.output { background: rgba(34,197,94,0.1); border-color: rgba(34,197,94,0.4); color: var(--success); }
+.arch-node.input { background: var(--surface2); border-color: var(--border); color: var(--text-dim); }
+.arch-arrow { color: var(--text-dimmer); font-size: 1.2rem; display: flex; align-items: center; }
+
+/* ---- DATA QUALITY METER ---- */
+.quality-grid { display: grid; grid-template-columns: repeat(5,1fr); gap: 0.75rem; }
+@media(max-width:700px) { .quality-grid { grid-template-columns: repeat(2,1fr); } }
+.quality-item {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 10px; padding: 1rem; text-align: center;
+  cursor: pointer; transition: all 0.2s;
+}
+.quality-item:hover { border-color: var(--accent); }
+.quality-score {
+  font-family: var(--display); font-size: 1.8rem; font-weight: 800;
+  line-height: 1;
+}
+.quality-label { font-family: var(--mono); font-size: 9px; color: var(--text-dimmer); letter-spacing: 0.1em; margin-top: 4px; }
+.quality-threshold { font-size: 10px; color: var(--text-dim); margin-top: 6px; }
+.quality-bar { height: 3px; border-radius: 2px; margin-top: 8px; background: var(--bg); }
+.quality-fill { height: 100%; border-radius: 2px; transition: width 1s ease; }
+
+/* ---- FAILURE MODES TABLE ---- */
+.failure-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 10px; overflow: hidden; margin-bottom: 0.75rem;
+  cursor: pointer;
+}
+.failure-header {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 1rem 1.25rem;
+}
+.failure-title { font-weight: 600; font-size: 0.95rem; }
+.failure-body {
+  padding: 0 1.25rem; max-height: 0; overflow: hidden;
+  transition: max-height 0.4s ease, padding 0.3s;
+}
+.failure-body.open { max-height: 300px; padding: 0 1.25rem 1.25rem; }
+.failure-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; margin-top: 1rem; }
+@media(max-width:600px) { .failure-row { grid-template-columns: 1fr; } }
+.failure-col-label { font-family: var(--mono); font-size: 10px; color: var(--text-dimmer); letter-spacing: 0.1em; margin-bottom: 4px; }
+.failure-col-val { font-size: 0.85rem; color: var(--text-dim); }
+.chevron { transition: transform 0.3s; }
+.chevron.open { transform: rotate(180deg); }
+
+/* ---- TABS ---- */
+.tabs { display: flex; gap: 0; border-bottom: 1px solid var(--border); margin-bottom: 2rem; overflow-x: auto; }
+.tab-btn {
+  padding: 0.75rem 1.25rem; font-family: var(--mono); font-size: 11px;
+  color: var(--text-dim); background: none; border: none; cursor: pointer;
+  letter-spacing: 0.08em; border-bottom: 2px solid transparent;
+  transition: all 0.2s; white-space: nowrap;
+}
+.tab-btn:hover { color: var(--text); }
+.tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+.tab-panel { display: none; }
+.tab-panel.active { display: block; animation: fadeIn 0.3s ease; }
+
+/* ---- METRIC BARS ---- */
+.metric-bar-row { display: flex; flex-direction: column; gap: 0.6rem; }
+.metric-bar-item { display: flex; align-items: center; gap: 1rem; }
+.metric-bar-label { font-family: var(--mono); font-size: 11px; color: var(--text-dim); width: 180px; flex-shrink: 0; }
+.metric-bar-track { flex: 1; height: 6px; background: var(--bg); border-radius: 3px; overflow: hidden; }
+.metric-bar-fill { height: 100%; border-radius: 3px; transition: width 1.2s cubic-bezier(0.23,1,0.32,1); }
+.metric-bar-val { font-family: var(--mono); font-size: 11px; color: var(--text); width: 60px; text-align: right; }
+
+/* ---- CALLOUT ---- */
+.callout {
+  border-left: 3px solid var(--accent3);
+  background: rgba(124,92,252,0.05);
+  border-radius: 0 8px 8px 0;
+  padding: 1rem 1.25rem; margin: 1.25rem 0;
+}
+.callout p { color: var(--text-dim); font-size: 0.9rem; }
+.callout strong { color: var(--accent3); }
+
+/* ---- RECOMMENDATION ---- */
+.rec-grid { display: grid; grid-template-columns: repeat(auto-fill,minmax(220px,1fr)); gap: 1rem; margin-top: 1.5rem; }
+.rec-item {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 10px; padding: 1.25rem;
+}
+.rec-num {
+  font-family: var(--display); font-size: 2rem; font-weight: 800;
+  color: var(--accent); opacity: 0.3; line-height: 1;
+}
+.rec-title { font-weight: 600; margin: 0.5rem 0 0.25rem; font-size: 0.95rem; }
+.rec-desc { font-size: 0.85rem; color: var(--text-dim); }
+
+/* ---- REFERENCES ---- */
+.ref-list { list-style: none; counter-reset: ref; }
+.ref-list li {
+  counter-increment: ref; padding: 0.6rem 0;
+  border-bottom: 1px solid var(--border); font-size: 0.88rem;
+  color: var(--text-dim); display: flex; gap: 1rem; align-items: baseline;
+}
+.ref-list li::before {
+  content: counter(ref);
+  font-family: var(--mono); font-size: 10px; color: var(--accent);
+  min-width: 20px;
+}
+
+/* ---- FOOTER ---- */
+footer {
+  border-top: 1px solid var(--border); padding: 2rem;
+  text-align: center; color: var(--text-dimmer);
+  font-family: var(--mono); font-size: 11px; letter-spacing: 0.1em;
+}
+
+/* ---- DIVIDER ---- */
+.divider { height: 1px; background: linear-gradient(90deg, transparent, var(--border), transparent); margin: 0; }
+
+/* ---- SECTION ALTERNATING BG ---- */
+.section-alt { background: var(--bg2); }
+
+/* ---- PROGRESS RINGS (for hero stats) ---- */
+.stats-row { display: flex; gap: 2rem; margin-top: 2.5rem; flex-wrap: wrap; }
+.stat-item { text-align: left; }
+.stat-val {
+  font-family: var(--display); font-size: 2.2rem; font-weight: 800;
+  line-height: 1; color: var(--accent);
+}
+.stat-unit { font-size: 1rem; color: var(--text-dim); }
+.stat-label { font-family: var(--mono); font-size: 10px; color: var(--text-dimmer); letter-spacing: 0.1em; margin-top: 4px; }
+
+/* ---- HOVER TOOLTIP ---- */
+[data-tip] { position: relative; cursor: help; }
+[data-tip]::after {
+  content: attr(data-tip);
+  position: absolute; bottom: calc(100% + 8px); left: 50%;
+  transform: translateX(-50%); white-space: nowrap;
+  background: var(--surface2); border: 1px solid var(--border);
+  border-radius: 6px; padding: 6px 12px;
+  font-family: var(--mono); font-size: 11px; color: var(--text);
+  pointer-events: none; opacity: 0; transition: opacity 0.2s;
+  z-index: 99;
+}
+[data-tip]:hover::after { opacity: 1; }
+
+/* ---- ANIMATED COUNTER ---- */
+.counter { display: inline-block; }
+
+/* ---- TABLE WRAPPER ---- */
+.table-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: 12px; }
+.table-wrap .comp-table { border: none; }
+
+/* ---- LEAKAGE SECTION ---- */
+.leak-item {
+  display: flex; gap: 1.25rem; padding: 1.25rem 0;
+  border-bottom: 1px solid var(--border);
+}
+.leak-item:last-child { border: none; }
+.leak-icon {
+  width: 40px; height: 40px; border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.2rem; flex-shrink: 0;
+  background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.2);
+}
+.leak-body h4 { font-weight: 600; margin-bottom: 0.25rem; }
+.leak-body p { font-size: 0.88rem; color: var(--text-dim); }
+
+/* ---- PINN LOSS DISPLAY ---- */
+.pinn-lambda { display: flex; flex-direction: column; gap: 0.5rem; margin: 1rem 0; }
+.lambda-row { display: flex; align-items: center; gap: 1rem; }
+.lambda-label { font-family: var(--mono); font-size: 11px; width: 100px; }
+.lambda-track { flex: 1; height: 8px; border-radius: 4px; overflow: hidden; background: var(--bg); }
+.lambda-fill { height: 100%; border-radius: 4px; }
+.lambda-desc { font-size: 0.82rem; color: var(--text-dim); width: 220px; }
+
+/* ---- HYBRID BADGE ---- */
+.hybrid-badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-family: var(--mono); font-size: 10px; letter-spacing: 0.1em;
+  padding: 4px 10px; border-radius: 100px;
+}
+
+/* ---- Scrolled nav active ---- */
+.scrolled { box-shadow: 0 1px 20px rgba(0,0,0,0.4); }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav id="nav">
+  <div class="nav-brand">⟨ Assignment 2 /⟩</div>
+  <ul class="nav-links">
+    <li><a href="#scenario">Scenario</a></li>
+    <li><a href="#part1">Architecture</a></li>
+    <li><a href="#part2">Data</a></li>
+    <li><a href="#part3">Compute</a></li>
+    <li><a href="#rec">Verdict</a></li>
+    <li><a href="#refs">Refs</a></li>
+  </ul>
+</nav>
+
+<!-- HERO -->
+<section class="hero" id="top">
+  <div class="hero-grid"></div>
+  <div class="hero-glow"></div>
+  <div class="hero-inner">
+    <div class="hero-badge"><span class="dot"></span> AI &amp; Advanced Large Models Course· Assignment 2</div>
+    <h1>
+      The Data &amp;<br>
+      <span class="line2">Compute Reality</span><br>
+      <span class="line3">Check</span>
+    </h1>
+    <p class="hero-sub">
+      Pitching an AI solution to an Engineering Manager — Predictive Maintenance of
+      Gas Turbine Engines, fleet of 200 aircraft.
+      Comparing NN/Transformers vs. PINNs. Exposing the real bottlenecks.
+    </p>
+    <div class="stats-row">
+      <div class="stat-item">
+        <div class="stat-val"><span class="counter" data-target="250">0</span><span class="stat-unit">×</span></div>
+        <div class="stat-label">DATA REDUCTION (PINN)</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-val"><span class="counter" data-target="2.5">0</span><span class="stat-unit">×</span></div>
+        <div class="stat-label">PERF GAIN FROM DATA</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-val"><span class="counter" data-target="78">0</span><span class="stat-unit">%</span></div>
+        <div class="stat-label">FAULT RECALL AFTER FIX</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-val"><span class="counter" data-target="200">0</span></div>
+        <div class="stat-label">AIRCRAFT DEPLOYED</div>
+      </div>
+    </div>
+    <div class="hero-meta">
+      <div class="hero-meta-item">
+        <span class="hero-meta-label">School</span>
+        <span class="hero-meta-value">International School</span> 
+		<span class="hero-meta-vaue">Beihang University</span>
+      </div>
+      <div class="hero-meta-item">
+        <span class="hero-meta-label">Students</span>
+        <span class="hero-meta-value">Aditya Bayu E / LS2525209</span>
+		<span class="hero-meta-value">Paing Htet Moe Kyaw / LS2557214</span>
+      </div>
+      <div class="hero-meta-item">
+        <span class="hero-meta-label">Instructor</span>
+        <span class="hero-meta-value">Prof. Yang Hu</span>
+      </div>
+    </div>
+  </div>
+  <div class="hero-scroll">SCROLL <span class="arrow">↓</span></div>
+</section>
+
+<div class="divider"></div>
+
+<!-- SCENARIO -->
+<section id="scenario">
+  <div class="container">
+    <div class="section-label">Scenario</div>
+    <div class="scenario-banner">
+      <h2>🛫 Gas Turbine Engine Predictive Maintenance</h2>
+      <p>
+        You are pitching an AI solution to an engineering manager for <strong>Predictive Maintenance of
+        Gas Turbine Engines</strong> in a commercial aviation fleet. The system must predict
+        <strong>Remaining Useful Life (RUL)</strong> of critical engine components using sensor data
+        from an operational fleet of <strong>200 aircraft</strong>. You must explain the trade-offs between
+        traditional NN / Transformers and Physics-Informed Neural Networks (PINNs), and address the
+        "compute reality" and data bottlenecks that will determine whether this project succeeds or fails in production.
+      </p>
+      <div class="stats-row" style="margin-top:1.5rem">
+        <div class="stat-item">
+          <div class="stat-val" style="font-size:1.4rem;color:var(--accent2)">25.6 kHz</div>
+          <div class="stat-label">VIBRATION SAMPLING</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-val" style="font-size:1.4rem;color:var(--accent3)">~1 Hz</div>
+          <div class="stat-label">THERMOCOUPLE (EGT)</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-val" style="font-size:1.4rem;color:var(--success)">3 Known PDEs</div>
+          <div class="stat-label">BRAYTON / NEWTON / FOURIER</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- PART 1: ARCHITECTURE -->
+<section id="part1" class="section-alt">
+  <div class="container">
+    <div class="section-label">Part 1 — Architecture Trade-Off</div>
+    <div class="section-title">Traditional NN/Transformers vs. PINNs</div>
+    <p class="section-desc">
+      The golden rule: <em>"Choose by problem structure, not hype."</em>
+      Wrong architecture = 10× more data needed to compensate for mismatched inductive bias.
+    </p>
+
+    <div class="tabs">
+      <button class="tab-btn active" onclick="switchTab('arch','transformer')">Transformer Approach</button>
+      <button class="tab-btn" onclick="switchTab('arch','pinn')">PINN Approach</button>
+      <button class="tab-btn" onclick="switchTab('arch','hybrid')">Hybrid (Recommended)</button>
+      <button class="tab-btn" onclick="switchTab('arch','compare')">Side-by-Side</button>
+    </div>
+
+    <!-- TRANSFORMER TAB -->
+    <div class="tab-panel active" id="arch-transformer">
+      <div class="grid-2">
+        <div>
+          <div class="card">
+            <div class="card-label">Self-Attention Mechanism</div>
+            <h3>Transformer-Based Architecture</h3>
+            <p>Captures long-range temporal dependencies critical for degradation trend detection. The attention mechanism acts as a differentiable lookup table.</p>
+            <div class="formula">
+              Attention(Q, K, V) = softmax(QK<sup>T</sup> / √d_k) · V
+            </div>
+            <p style="margin-top:0.75rem">Q = "What am I looking for?" · K = "What does each token contain?" · V = "Content to retrieve"</p>
+          </div>
+          <div class="card" style="margin-top:1rem">
+            <div class="card-label">Multi-Head Specialization</div>
+            <h3>Parallel Attention Heads</h3>
+            <p>Each head learns different roles simultaneously:</p>
+            <div style="display:flex;flex-direction:column;gap:6px;margin-top:0.75rem">
+              <div style="display:flex;gap:8px;align-items:center"><span class="badge badge-cyan">Head 1</span><span style="font-size:0.85rem;color:var(--text-dim)">Vibration frequency patterns</span></div>
+              <div style="display:flex;gap:8px;align-items:center"><span class="badge badge-purple">Head 2</span><span style="font-size:0.85rem;color:var(--text-dim)">Temporal degradation trends</span></div>
+              <div style="display:flex;gap:8px;align-items:center"><span class="badge badge-orange">Head 3</span><span style="font-size:0.85rem;color:var(--text-dim)">Cross-sensor correlation</span></div>
+              <div style="display:flex;gap:8px;align-items:center"><span class="badge badge-green">Head 4</span><span style="font-size:0.85rem;color:var(--text-dim)">Syntax/structure patterns</span></div>
+            </div>
+          </div>
+        </div>
+        <div>
+          <div class="card" style="border-color:rgba(34,197,94,0.3)">
+            <div class="card-label">Advantages ✓</div>
+            <ul style="list-style:none;display:flex;flex-direction:column;gap:0.5rem;margin-top:0.5rem">
+              <li style="color:var(--text-dim);font-size:0.88rem">✓ Captures complex nonlinear degradation without explicit physics</li>
+              <li style="color:var(--text-dim);font-size:0.88rem">✓ Processes variable-length flight sequences</li>
+              <li style="color:var(--text-dim);font-size:0.88rem">✓ Residual connections (ResNet-inherited) ensure stable gradient flow</li>
+              <li style="color:var(--text-dim);font-size:0.88rem">✓ Proven at scale — backbone of GPT, BERT, Llama</li>
+            </ul>
+          </div>
+          <div class="card" style="border-color:rgba(239,68,68,0.3);margin-top:1rem">
+            <div class="card-label">Critical Limitations ✗</div>
+            <ul style="list-style:none;display:flex;flex-direction:column;gap:0.5rem;margin-top:0.5rem">
+              <li style="color:var(--text-dim);font-size:0.88rem">✗ <strong style="color:var(--text)">O(n²d)</strong> attention cost — 100k timesteps → 10<sup>10</sup> entry matrix</li>
+              <li style="color:var(--text-dim);font-size:0.88rem">✗ May learn spurious correlations (ambient temp ≠ degradation)</li>
+              <li style="color:var(--text-dim);font-size:0.88rem">✗ No physics grounding — predictions may violate thermodynamics</li>
+              <li style="color:var(--text-dim);font-size:0.88rem">✗ Requires massive labeled failure data (rare in aviation)</li>
+            </ul>
+          </div>
+          <div class="insight" style="margin-top:1rem">
+            <div class="insight-label">Session 3 · Slide 15</div>
+            <p>Memory: O(n²) · FLOPs: O(n²d). Mitigation: Flash Attention, sliding window attention, sparse attention.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PINN TAB -->
+    <div class="tab-panel" id="arch-pinn">
+      <div class="grid-2">
+        <div>
+          <div class="card">
+            <div class="card-label">Physics as Loss Function — Raissi et al., 2019</div>
+            <h3>Physics-Informed Neural Networks</h3>
+            <p>Embed physical laws <em>directly</em> into the training loss. The network is forced to satisfy governing equations.</p>
+            <div class="formula">
+              L_total = L_data + λ · L_physics
+            </div>
+            <div class="pinn-lambda">
+              <div class="lambda-row">
+                <div class="lambda-label" style="color:var(--danger)">λ = 0.01</div>
+                <div class="lambda-track"><div class="lambda-fill" style="width:5%;background:var(--danger)"></div></div>
+                <div class="lambda-desc">Ignores physics; overfits noise</div>
+              </div>
+              <div class="lambda-row">
+                <div class="lambda-label" style="color:var(--success)">λ = balanced</div>
+                <div class="lambda-track"><div class="lambda-fill" style="width:50%;background:var(--success)"></div></div>
+                <div class="lambda-desc">L_data ≈ L_physics at convergence</div>
+              </div>
+              <div class="lambda-row">
+                <div class="lambda-label" style="color:var(--warn)">λ = 100</div>
+                <div class="lambda-track"><div class="lambda-fill" style="width:95%;background:var(--warn)"></div></div>
+                <div class="lambda-desc">Ignores data; solves PDE only</div>
+              </div>
+            </div>
+          </div>
+          <div class="card" style="margin-top:1rem">
+            <div class="card-label">Gas Turbine Physics</div>
+            <h3>Governing Equations Enforced</h3>
+            <ul style="list-style:none;display:flex;flex-direction:column;gap:6px;margin-top:0.5rem">
+              <li style="font-size:0.88rem;color:var(--text-dim)">• Brayton cycle thermodynamic relations</li>
+              <li style="font-size:0.88rem;color:var(--text-dim)">• Rotordynamic equations of motion: P·τ = I·α</li>
+              <li style="font-size:0.88rem;color:var(--text-dim)">• Fourier's law: heat conduction through turbine blades</li>
+            </ul>
+            <div class="formula" style="margin-top:0.75rem">
+              L_phys = (1/N_c) Σ [∂u_θ/∂t − α ∂²u_θ/∂x²]²
+            </div>
+          </div>
+        </div>
+        <div>
+          <div class="card" style="border-color:rgba(0,212,170,0.3)">
+            <div class="card-label">Data Efficiency</div>
+            <h3>250× Less Data Required</h3>
+            <div class="table-wrap" style="margin-top:1rem">
+              <table class="comp-table">
+                <tr><th>Method</th><th>Training Data</th><th>RMSE</th></tr>
+                <tr><td>Pure NN</td><td>50,000 CFD samples</td><td>0.8°C</td></tr>
+                <tr><td><strong style="color:var(--accent)">PINN</strong></td><td><strong style="color:var(--accent)">200 sensors + PDE</strong></td><td><strong style="color:var(--accent)">0.9°C</strong></td></tr>
+                <tr><td>Traditional CFD</td><td>N/A</td><td>0.1°C</td></tr>
+              </table>
+            </div>
+          </div>
+          <div class="card" style="border-color:rgba(239,68,68,0.3);margin-top:1rem">
+            <div class="card-label">PINN Limitations</div>
+            <ul style="list-style:none;display:flex;flex-direction:column;gap:0.5rem;margin-top:0.5rem">
+              <li style="font-size:0.88rem;color:var(--text-dim)">✗ Slow training — PDE evaluation per batch</li>
+              <li style="font-size:0.88rem;color:var(--text-dim)">✗ Complex boundary conditions hard to differentiate</li>
+              <li style="font-size:0.88rem;color:var(--text-dim)">✗ Turbulence has no closed-form PDE</li>
+              <li style="font-size:0.88rem;color:var(--text-dim)">✗ Spectral bias — misses high-freq fault features</li>
+            </ul>
+          </div>
+          <div class="warn-box" style="margin-top:1rem">
+            <div class="warn-box-label">⚠ Decision Rule</div>
+            <p>Use PINNs: <strong>known PDEs + scarce data + extrapolation needed.</strong><br>
+            Do NOT use: unknown physics, massive data, or need &lt;0.1% error (use CFD).</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- HYBRID TAB -->
+    <div class="tab-panel" id="arch-hybrid">
+      <p style="color:var(--text-dim);margin-bottom:1.5rem">
+        For our gas turbine RUL system, no single architecture is sufficient. The frontier (2024+) approach
+        combines complementary inductive biases. This directly follows Session 3 Slide 20 &amp; 25.
+      </p>
+      <div class="arch-diagram">
+        <div class="arch-row">
+          <div class="arch-node input">Vibration 25.6 kHz<br><small>Time-series grid</small></div>
+          <div class="arch-node input">EGT / N1, N2<br><small>SCADA params</small></div>
+          <div class="arch-node input">Component Graph<br><small>200 nodes</small></div>
+        </div>
+        <div class="arch-row">
+          <span class="arch-arrow">↓</span>
+          <span class="arch-arrow">↓</span>
+          <span class="arch-arrow">↓</span>
+        </div>
+        <div class="arch-row">
+          <div class="arch-node transformer">Transformer<br><small>1024-step sequences<br>Self-attention + PE</small></div>
+          <div class="arch-node pinn">PINN Loss<br><small>Brayton + Fourier<br>+ Rotordynamics</small></div>
+          <div class="arch-node gnn">GNN (GraphSAGE)<br><small>Fault propagation<br>topology-aware</small></div>
+        </div>
+        <div class="arch-row"><span class="arch-arrow">↓ Fusion ↓</span></div>
+        <div class="arch-row">
+          <div class="arch-node output">RUL Prediction + Health Score + Fault Path<br><small>Physics-consistent · Interpretable · Deployable</small></div>
+        </div>
+      </div>
+      <div class="grid-3" style="margin-top:1.5rem">
+        <div class="card">
+          <div class="card-label" style="color:#a78bfa">GNN Component</div>
+          <h3>Topology-Aware</h3>
+          <p>Models engine component connectivity graph. Captures k-hop fault propagation: bearing → shaft → gearbox → drivetrain.</p>
+        </div>
+        <div class="card">
+          <div class="card-label">Transformer Component</div>
+          <h3>Sequence-Aware</h3>
+          <p>Processes vibration &amp; temperature time-series per component. Long-range temporal degradation via self-attention.</p>
+        </div>
+        <div class="card">
+          <div class="card-label" style="color:var(--accent2)">PINN Component</div>
+          <h3>Physics-Aware</h3>
+          <p>Enforces mass, energy, momentum conservation. Ensures thermodynamically consistent predictions even for rare fault modes.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- COMPARE TAB -->
+    <div class="tab-panel" id="arch-compare">
+      <div class="table-wrap">
+        <table class="comp-table">
+          <thead>
+            <tr>
+              <th>Dimension</th>
+              <th>Pure Transformer</th>
+              <th>PINN Only</th>
+              <th>Hybrid GNN+Transformer+PINN</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Data Requirement</td>
+              <td><span class="badge badge-red">High</span> 10k+ labeled failures</td>
+              <td><span class="badge badge-green">Low</span> 200 sensors + PDE</td>
+              <td><span class="badge badge-cyan">Balanced</span> Medium + synthetic</td>
+            </tr>
+            <tr>
+              <td>Physics Consistency</td>
+              <td><span class="badge badge-red">None</span> May violate thermodynamics</td>
+              <td><span class="badge badge-green">High</span> PDE-constrained</td>
+              <td><span class="badge badge-green">High</span> PINN enforces laws</td>
+            </tr>
+            <tr>
+              <td>Compute Cost (Training)</td>
+              <td><span class="badge badge-orange">High</span> O(n²d) attention</td>
+              <td><span class="badge badge-orange">Medium</span> PDE eval per batch</td>
+              <td><span class="badge badge-orange">High</span> Combined</td>
+            </tr>
+            <tr>
+              <td>Topology Handling</td>
+              <td><span class="badge badge-red">Weak</span> Sequence only</td>
+              <td><span class="badge badge-red">Weak</span> Grid/point-based</td>
+              <td><span class="badge badge-green">Strong</span> GNN for graph</td>
+            </tr>
+            <tr>
+              <td>Extrapolation</td>
+              <td><span class="badge badge-red">Poor</span> No physics grounding</td>
+              <td><span class="badge badge-green">Excellent</span> PDE extrapolates</td>
+              <td><span class="badge badge-green">Excellent</span> Physics + data</td>
+            </tr>
+            <tr>
+              <td>Interpretability</td>
+              <td><span class="badge badge-orange">Attention maps</span></td>
+              <td><span class="badge badge-green">Physics terms</span></td>
+              <td><span class="badge badge-cyan">Both</span></td>
+            </tr>
+            <tr>
+              <td>Best For</td>
+              <td>Large labeled datasets, pattern recognition</td>
+              <td>Scarce data, known PDEs, extrapolation</td>
+              <td><strong style="color:var(--accent)">Fleet-level RUL — Our Case ✓</strong></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="insight" style="margin-top:1.5rem">
+        <div class="insight-label">Golden Rule</div>
+        <p>For our fleet: well-known thermodynamic PDEs + scarce failure data + need to extrapolate to new operating conditions → <strong>Hybrid is optimal.</strong></p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- PART 2: DATA -->
+<section id="part2">
+  <div class="container">
+    <div class="section-label">Part 2 — Data Bottlenecks</div>
+    <div class="section-title">Data Quality &amp; Distribution</div>
+    <p class="section-desc">
+      Session 4 paradigm shift: <em>data is SIGNAL, not fuel.</em>
+      10,000 clean samples (I = 1.5 bits) outperform 1,000,000 noisy samples (I = 0.2 bits).
+    </p>
+
+    <!-- QUALITY DIMENSIONS -->
+    <div class="section-label" style="margin-bottom:1rem">5-Dimension Quality Audit</div>
+    <div class="quality-grid" id="qualityGrid">
+      <div class="quality-item" onclick="showQualityDetail('completeness')">
+        <div class="quality-score" style="color:var(--success)">95%</div>
+        <div class="quality-label">COMPLETENESS</div>
+        <div class="quality-threshold">Threshold: &gt;95% non-missing</div>
+        <div class="quality-bar"><div class="quality-fill" style="width:95%;background:var(--success)"></div></div>
+      </div>
+      <div class="quality-item" onclick="showQualityDetail('consistency')">
+        <div class="quality-score" style="color:var(--warn)">78%</div>
+        <div class="quality-label">CONSISTENCY</div>
+        <div class="quality-threshold">Drift &lt;5%/1000hrs</div>
+        <div class="quality-bar"><div class="quality-fill" style="width:78%;background:var(--warn)"></div></div>
+      </div>
+      <div class="quality-item" onclick="showQualityDetail('accuracy')">
+        <div class="quality-score" style="color:var(--warn)">68%</div>
+        <div class="quality-label">ACCURACY (κ)</div>
+        <div class="quality-threshold">κ &gt; 0.6 (Fleiss)</div>
+        <div class="quality-bar"><div class="quality-fill" style="width:68%;background:var(--warn)"></div></div>
+      </div>
+      <div class="quality-item" onclick="showQualityDetail('timeliness')">
+        <div class="quality-score" style="color:var(--success)">✓</div>
+        <div class="quality-label">TIMELINESS</div>
+        <div class="quality-threshold">f_s ≥ 2.5× f_max</div>
+        <div class="quality-bar"><div class="quality-fill" style="width:92%;background:var(--success)"></div></div>
+      </div>
+      <div class="quality-item" onclick="showQualityDetail('relevance')">
+        <div class="quality-score" style="color:var(--accent)">1.7</div>
+        <div class="quality-label">RELEVANCE (bits)</div>
+        <div class="quality-threshold">I(X;Y) &gt; 0.3 bits</div>
+        <div class="quality-bar"><div class="quality-fill" style="width:85%;background:var(--accent)"></div></div>
+      </div>
+    </div>
+
+    <div id="qualityDetail" class="insight" style="margin-top:1rem;display:none">
+      <div class="insight-label" id="qualityDetailLabel"></div>
+      <p id="qualityDetailText"></p>
+    </div>
+
+    <!-- MUTUAL INFORMATION -->
+    <div style="margin-top:3rem">
+      <div class="section-label">Information-Theoretic Assessment</div>
+      <div class="grid-2">
+        <div>
+          <div class="card">
+            <div class="card-label">Mutual Information</div>
+            <h3>Feature Relevance Ranking</h3>
+            <div class="formula">I(X; Y) = H(Y) − H(Y | X)</div>
+            <div class="metric-bar-row" style="margin-top:1rem" id="miChart"></div>
+          </div>
+        </div>
+        <div>
+          <div class="card">
+            <div class="card-label">Information Bottleneck · Tishby et al., 1999</div>
+            <h3>Jet Engine Health Indicator</h3>
+            <p style="color:var(--text-dim);font-size:0.88rem">Input: 200 sensors × 500 Hz × 10 min → compressed to 8D vector</p>
+            <div style="margin-top:1rem;display:flex;flex-direction:column;gap:0.5rem">
+              <div style="display:flex;justify-content:space-between">
+                <span style="font-family:var(--mono);font-size:11px;color:var(--text-dim)">I(X; T) — Complexity</span>
+                <span style="font-family:var(--mono);font-size:11px;color:var(--text)">12.3 bits (98% compression)</span>
+              </div>
+              <div style="display:flex;justify-content:space-between">
+                <span style="font-family:var(--mono);font-size:11px;color:var(--text-dim)">I(T; Y) — Relevance</span>
+                <span style="font-family:var(--mono);font-size:11px;color:var(--accent)">1.8 bits (92% of max 1.95)</span>
+              </div>
+              <div style="display:flex;justify-content:space-between">
+                <span style="font-family:var(--mono);font-size:11px;color:var(--text-dim)">Accuracy with 8D vs 200D</span>
+                <span style="font-family:var(--mono);font-size:11px;color:var(--success)">94% vs 95% — massive savings!</span>
+              </div>
+            </div>
+            <div class="formula" style="margin-top:1rem">
+              min I(X;T) − β·I(T;Y)
+            </div>
+            <p style="font-size:0.82rem;color:var(--text-dim);margin-top:0.5rem">β too small → overfit · β too large → underfit</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- FAILURE MODES -->
+    <div style="margin-top:3rem">
+      <div class="section-label">Data Quality Failure Modes — Click to expand</div>
+      <div style="margin-top:1rem" id="failureModes"></div>
+    </div>
+
+    <!-- DATA LEAKAGE -->
+    <div style="margin-top:3rem">
+      <div class="section-label">Data Leakage Prevention</div>
+      <div class="card">
+        <h3 style="margin-bottom:1.25rem">Three Critical Leakage Sources — RUL Time-Series</h3>
+        <div class="leak-item">
+          <div class="leak-icon">⏰</div>
+          <div class="leak-body">
+            <h4>Temporal Leakage</h4>
+            <p>Future sensor readings inadvertently inform past predictions. Fix: strictly chronological train/val/test splits — never random shuffling of flight sequences. March 2025 flights must not train on Feb 2025 test data.</p>
+          </div>
+        </div>
+        <div class="leak-item">
+          <div class="leak-icon">✈</div>
+          <div class="leak-body">
+            <h4>Cross-Unit Leakage</h4>
+            <p>Same physical engine in both training and test sets at different time points. Each engine has unique degradation signatures. Fix: engine-level splitting — entire engine histories assigned to either training OR testing, never both.</p>
+          </div>
+        </div>
+        <div class="leak-item">
+          <div class="leak-icon">🔀</div>
+          <div class="leak-body">
+            <h4>Feature Leakage</h4>
+            <p>"Reduced thrust setting" is both a feature and a consequence of detected degradation — the model learns a trivial shortcut. Fix: audit features for causal ordering relative to the target variable.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CASE STUDY RESULTS -->
+    <div style="margin-top:3rem">
+      <div class="section-label">Case Study Results — Jet Engine RUL</div>
+      <div class="scenario-banner" style="border-color:rgba(34,197,94,0.25)">
+        <h2 style="color:var(--success)">📊 Data Curation: 3 Person-Months → 2.5× Performance Gain</h2>
+        <p>Architecture search with same effort → only 0.3× gain. 80% of variance from data. 20% from model.</p>
+        <div style="margin-top:1.5rem">
+          <div class="metric-bar-row" id="resultsChart"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ACTIVE LEARNING ROI -->
+    <div style="margin-top:2rem">
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-label">N_crit — Critical Sample Size</div>
+          <h3>Power Law of Learning</h3>
+          <p>Beyond N_crit: 10× more data yields &lt;2% error reduction. Better ROI: fix label noise or calibration.</p>
+          <div style="margin-top:1rem;display:flex;flex-direction:column;gap:0.4rem">
+            <div style="display:flex;justify-content:space-between;font-size:0.85rem">
+              <span style="color:var(--text-dim)">Bearing fault</span>
+              <span style="font-family:var(--mono)">N_crit ≈ 1,200</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;font-size:0.85rem">
+              <span style="color:var(--text-dim)">Blade crack (X-ray)</span>
+              <span style="font-family:var(--mono)">N_crit ≈ 8,500</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;font-size:0.85rem">
+              <span style="color:var(--text-dim)">System isolation</span>
+              <span style="font-family:var(--mono)">N_crit ≈ 400</span>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-label">Active Learning ROI</div>
+          <h3>5–10× Labeling Reduction</h3>
+          <p>Query near decision boundary (high uncertainty) + prioritize rare fault regions (high impact).</p>
+          <div class="formula" style="margin-top:1rem">
+            Label cost: $50/sample<br>
+            Missed fault cost: $500,000<br>
+            ─────────────────────<br>
+            Pays if prevents 1 miss / 10k labels
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- PART 3: COMPUTE -->
+<section id="part3" class="section-alt">
+  <div class="container">
+    <div class="section-label">Part 3 — Compute Reality</div>
+    <div class="section-title">Matrix Operations, Memory &amp; Scaling</div>
+    <p class="section-desc">
+      Every neural network operation is tensor math. Understanding the bottlenecks is essential
+      for production deployment decisions.
+    </p>
+
+    <div class="tabs">
+      <button class="tab-btn active" onclick="switchTab('compute','gemm')">GEMM &amp; FLOPs</button>
+      <button class="tab-btn" onclick="switchTab('compute','training')">Training vs Inference</button>
+      <button class="tab-btn" onclick="switchTab('compute','quantize')">Quantization</button>
+      <button class="tab-btn" onclick="switchTab('compute','scaling')">Scaling Laws</button>
+    </div>
+
+    <div class="tab-panel active" id="compute-gemm">
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-label">GEMM Dominates — ~99.5% of FLOPs</div>
+          <h3>General Matrix Multiplication</h3>
+          <div class="formula">FLOPs = 2 × m × n × p</div>
+          <p>For d_model = 4096: 2 × 4096³ ≈ 137 GFLOPs per matrix multiply.</p>
+          <div class="formula" style="margin-top:0.75rem">Forward pass FLOPs ≈ 2 × N_params × N_tokens</div>
+          <p style="margin-top:0.5rem;color:var(--text-dim);font-size:0.88rem">GPT-3 (175B params) × 2048 tokens ≈ 314 TFLOPs per forward pass (~1 sec on A100)</p>
+        </div>
+        <div class="card">
+          <div class="card-label">Roofline Model</div>
+          <h3>Compute vs. Memory Bound</h3>
+          <div style="display:flex;flex-direction:column;gap:0.75rem;margin-top:0.75rem">
+            <div>
+              <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+                <span style="font-family:var(--mono);font-size:11px;color:var(--text-dim)">Large MatMul (compute-bound)</span>
+                <span class="badge badge-green">~85% GPU util</span>
+              </div>
+              <div class="quality-bar"><div class="quality-fill" style="width:85%;background:var(--success)"></div></div>
+            </div>
+            <div>
+              <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+                <span style="font-family:var(--mono);font-size:11px;color:var(--text-dim)">Softmax / LayerNorm (memory-bound)</span>
+                <span class="badge badge-red">~10% GPU util</span>
+              </div>
+              <div class="quality-bar"><div class="quality-fill" style="width:10%;background:var(--danger)"></div></div>
+            </div>
+            <div>
+              <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+                <span style="font-family:var(--mono);font-size:11px;color:var(--text-dim)">Single inference request</span>
+                <span class="badge badge-red">~5% GPU util</span>
+              </div>
+              <div class="quality-bar"><div class="quality-fill" style="width:5%;background:var(--danger)"></div></div>
+            </div>
+          </div>
+          <div class="insight" style="margin-top:1rem">
+            <div class="insight-label">Implication</div>
+            <p>Consolidate small ops. Maximize matrix sizes. Batch aggressively. A100 HBM: 2.0 TB/s bandwidth.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="tab-panel" id="compute-training">
+      <div class="table-wrap">
+        <table class="comp-table">
+          <thead>
+            <tr><th>Aspect</th><th>Training</th><th>Inference</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>FLOPs per token</td>
+              <td>6N (fwd + bwd + optimizer)</td>
+              <td>2N (forward only)</td>
+            </tr>
+            <tr>
+              <td>Memory per parameter</td>
+              <td>12× bytes (weights + grads + optimizer states FP32)</td>
+              <td>2× bytes (FP16 weights only)</td>
+            </tr>
+            <tr>
+              <td>Bottleneck</td>
+              <td><span class="badge badge-purple">Compute-bound</span> large parallel batches</td>
+              <td><span class="badge badge-orange">Memory-bound</span> sequential token gen</td>
+            </tr>
+            <tr>
+              <td>GPU utilization</td>
+              <td><span class="badge badge-green">High</span> full matrix ops</td>
+              <td><span class="badge badge-red">~5%</span> at batch=1</td>
+            </tr>
+            <tr>
+              <td>7B model memory</td>
+              <td>7B × 12B = <strong>84 GB</strong> (needs A100 80GB+)</td>
+              <td>7B × 2B = <strong>14 GB</strong> (consumer GPU)</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="grid-2" style="margin-top:1.5rem">
+        <div class="card">
+          <div class="card-label">KV Cache Growth</div>
+          <h3>Inference Memory Trap</h3>
+          <div class="formula">KV cache = 2 × L × 2 × d × T bytes</div>
+          <p>LLaMA-70B at sequence length 4096 → <strong style="color:var(--accent2)">~20 GB KV cache alone.</strong> Must be managed with continuous batching (vLLM/TGI).</p>
+        </div>
+        <div class="card">
+          <div class="card-label">Batching Impact</div>
+          <h3>Throughput vs Latency</h3>
+          <div style="display:flex;flex-direction:column;gap:0.5rem;margin-top:0.75rem">
+            <div style="display:flex;justify-content:space-between;font-size:0.85rem">
+              <span style="color:var(--text-dim)">Batch=1</span>
+              <span>125 tok/s · 5% util · 8ms latency</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;font-size:0.85rem">
+              <span style="color:var(--text-dim)">Batch=128</span>
+              <span>2,844 tok/s · 85% util · 45ms latency</span>
+            </div>
+          </div>
+          <div class="insight" style="margin-top:1rem">
+            <div class="insight-label">Production Strategy</div>
+            <p>Continuous batching dynamically adds/removes requests — industry standard (vLLM, TGI).</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="tab-panel" id="compute-quantize">
+      <p style="color:var(--text-dim);margin-bottom:1.5rem">Quantization trades numerical precision for speed and memory savings. Critical for deploying 70B models on limited hardware.</p>
+      <div class="table-wrap">
+        <table class="comp-table">
+          <thead>
+            <tr><th>Format</th><th>Bits</th><th>Memory (70B)</th><th>Speed vs FP32</th><th>Use Case</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>FP32</td><td>32</td><td>280 GB</td>
+              <td><span class="badge badge-red">1×</span></td><td>Research baseline</td>
+            </tr>
+            <tr>
+              <td>BF16</td><td>16</td><td>140 GB</td>
+              <td><span class="badge badge-orange">~2×</span></td><td>Training standard</td>
+            </tr>
+            <tr>
+              <td>INT8</td><td>8</td><td>70 GB</td>
+              <td><span class="badge badge-cyan">~3–4×</span></td><td>Inference quantization</td>
+            </tr>
+            <tr>
+              <td><strong style="color:var(--accent)">INT4</strong></td><td>4</td><td><strong style="color:var(--accent)">35 GB</strong></td>
+              <td><span class="badge badge-green">~5–8×</span></td><td><strong style="color:var(--accent)">Aggressive inference — our case</strong></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="insight" style="margin-top:1.5rem">
+        <div class="insight-label">Our System Decision</div>
+        <p><strong>INT8 quantization</strong> reduces the model from 140 GB to 70 GB while maintaining acceptable accuracy — enabling deployment on a single A100 GPU. With INT4, 70B fits in 35 GB (well under 80 GB HBM3), making self-hosting economically viable at fleet scale.</p>
+      </div>
+    </div>
+
+    <div class="tab-panel" id="compute-scaling">
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-label">Kaplan Scaling Laws, 2020</div>
+          <h3>Performance Follows Power Law</h3>
+          <div class="formula">L(N) ≈ (N_c / N)^α · α ≈ 0.076</div>
+          <p>Loss decreases as power law of model size N. Performance is <strong style="color:var(--accent)">predictable before training.</strong></p>
+          <div class="formula" style="margin-top:0.75rem">L(C) ≈ (C₀/C)^α_C · α_C ≈ 0.05</div>
+          <p>10× compute → only ~12% loss reduction. Gains per dollar decrease over time.</p>
+          <div class="warn-box" style="margin-top:1rem">
+            <div class="warn-box-label">Economic Reality</div>
+            <p>Scaling eventually hits economic limits, not technical ones. We can predict model performance before expensive training runs — critical for budget planning.</p>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-label">Emergent Capabilities at Scale</div>
+          <h3>When Do Capabilities Appear?</h3>
+          <div style="display:flex;flex-direction:column;gap:0.6rem;margin-top:0.75rem">
+            <div style="display:flex;gap:1rem;align-items:center">
+              <span class="badge badge-red">&lt;10B</span>
+              <span style="font-size:0.85rem;color:var(--text-dim)">Basic text completion</span>
+            </div>
+            <div style="display:flex;gap:1rem;align-items:center">
+              <span class="badge badge-orange">&gt;60B</span>
+              <span style="font-size:0.85rem;color:var(--text-dim)">Reliable few-shot learning</span>
+            </div>
+            <div style="display:flex;gap:1rem;align-items:center">
+              <span class="badge badge-cyan">&gt;100B</span>
+              <span style="font-size:0.85rem;color:var(--text-dim)">Chain-of-thought reasoning</span>
+            </div>
+            <div style="display:flex;gap:1rem;align-items:center">
+              <span class="badge badge-green">&gt;400B</span>
+              <span style="font-size:0.85rem;color:var(--text-dim)">Complex multi-step problem solving</span>
+            </div>
+          </div>
+          <div class="insight" style="margin-top:1rem">
+            <div class="insight-label">Our Decision</div>
+            <p>Self-host fine-tuned <strong>7B model</strong> on single A100 with INT8. A 7B fine-tuned on engine data may outperform a general 70B model for our specific RUL task.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- PART 4: RECOMMENDATION -->
+<section id="rec">
+  <div class="container">
+    <div class="section-label">Part 4 — Integrated Recommendation</div>
+    <div class="section-title">The Engineering Manager's Verdict</div>
+    <p class="section-desc">Combining Sessions 3–5 insights into a production-ready strategy for 200-aircraft fleet deployment.</p>
+
+    <div class="grid-3">
+      <div class="card" style="border-color:rgba(124,92,252,0.35)">
+        <div class="card-label" style="color:#a78bfa">Architecture</div>
+        <h3>GNN + Transformer + PINN</h3>
+        <p>Topology (GNN) + Dynamics (Transformer) + Physics (PINN). Directly follows Session 3 frontier design. Thermodynamically plausible even for novel fault modes.</p>
+      </div>
+      <div class="card" style="border-color:rgba(0,212,170,0.35)">
+        <div class="card-label">Data Strategy</div>
+        <h3>Quality Before Complexity</h3>
+        <p>Allocate 80% of initial effort to data curation. Active learning. CFD synthetic augmentation (L2 fidelity). Continuous MMD drift monitoring.</p>
+      </div>
+      <div class="card" style="border-color:rgba(255,107,53,0.35)">
+        <div class="card-label" style="color:var(--accent2)">Compute</div>
+        <h3>Self-Hosted 7B + INT8</h3>
+        <p>Single A100 GPU with INT8 quantization. ~$5k training + ~$500/month retraining. &lt;100ms latency for 200 aircraft streams via continuous batching.</p>
+      </div>
+    </div>
+
+    <div class="rec-grid" style="margin-top:2rem">
+      <div class="rec-item">
+        <div class="rec-num">01</div>
+        <div class="rec-title">Data Audit First</div>
+        <div class="rec-desc">Run full 5-dimension quality check. Q_total &lt; 0.7 → fix data before training anything.</div>
+      </div>
+      <div class="rec-item">
+        <div class="rec-num">02</div>
+        <div class="rec-title">Engine-Level Splits</div>
+        <div class="rec-desc">Chronological train/val/test. Entire engine histories in one set only. No cross-unit leakage.</div>
+      </div>
+      <div class="rec-item">
+        <div class="rec-num">03</div>
+        <div class="rec-title">CFD Synthetic Data</div>
+        <div class="rec-desc">For rare events (&lt;0.03% HPC stall): 200+ CFD events, physics-validated within 5% divergence pressure.</div>
+      </div>
+      <div class="rec-item">
+        <div class="rec-num">04</div>
+        <div class="rec-title">Deploy MMD Monitor</div>
+        <div class="rec-desc">Online sliding window. Alert when MMD &gt; 3σ baseline. Trigger retrain or human review automatically.</div>
+      </div>
+      <div class="rec-item">
+        <div class="rec-num">05</div>
+        <div class="rec-title">Safety-Weighted Loss</div>
+        <div class="rec-desc">L_safety = Σ w_i · ℓ_i where w_i ∝ severity. Decoupled training for long-tail rare faults.</div>
+      </div>
+      <div class="rec-item">
+        <div class="rec-num">06</div>
+        <div class="rec-title">PINN as Safety Net</div>
+        <div class="rec-desc">Even OOD inputs remain thermodynamically plausible. Physics-consistency is the production safety guarantee.</div>
+      </div>
+    </div>
+
+    <div class="scenario-banner" style="margin-top:2rem;border-color:rgba(34,197,94,0.3)">
+      <h2 style="color:var(--success)">Expected Outcomes</h2>
+      <p>Based on Session 4 case study results applied to our 200-aircraft fleet:</p>
+      <div class="stats-row" style="margin-top:1rem">
+        <div class="stat-item">
+          <div class="stat-val" style="font-size:1.6rem">12% → 78%</div>
+          <div class="stat-label">HPC STALL RECALL</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-val" style="font-size:1.6rem">48 → 29 hrs</div>
+          <div class="stat-label">MAE REDUCTION</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-val" style="font-size:1.6rem">&lt;5%</div>
+          <div class="stat-label">PERFORMANCE DECAY / 6 MO</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-val" style="font-size:1.6rem">$4.2M</div>
+          <div class="stat-label">PREVENTED FAILURE COST</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- REFERENCES -->
+<section id="refs" class="section-alt">
+  <div class="container">
+    <div class="section-label">References</div>
+    <div class="section-title">Academic Sources</div>
+    <ul class="ref-list">
+      <li>Vaswani, A., et al. (2017). "Attention Is All You Need." <em>NeurIPS</em>. </li>
+      <li>He, K., et al. (2015). "Deep Residual Learning for Image Recognition." <em>CVPR</em>. </li>
+      <li>Raissi, M., Perdikaris, P., &amp; Karniadakis, G. E. (2019). "Physics-informed neural networks." <em>Journal of Computational Physics</em>. </li>
+      <li>Wang, S., Teng, Y., &amp; Perdikaris, P. (2021). "Understanding and mitigating gradient flow pathologies in PINNs." <em>SIAM Journal on Scientific Computing</em>.</li>
+      <li>Tishby, N., Pereira, F. C., &amp; Bialek, W. (1999). "The Information Bottleneck Method." </li>
+      <li>Ghorbani, A., &amp; Zou, J. (2019). "Data Shapley: Equitable Valuation of Data for Machine Learning." <em>ICML</em>. </li>
+      <li>Kaplan, J., et al. (2020). "Scaling Laws for Neural Language Models." </li>
+      <li>Gilmer, J., et al. (2017). "Neural Message Passing for Quantum Chemistry." </li>
+      <li>Rubin, D. B. (1976). "Inference and Missing Data." <em>Biometrika</em>.  (MCAR/MAR/MNAR)</li>
+      <li>Hu, Y. (2026). Session 3 &amp; Session 4 Lecture Slides — AI &amp; Advanced Large Models. Beihang University International Innovation Institute.</li>
+    </ul>
+  </div>
+</section>
+
+<footer>
+  &copy; 2026 Beihang University — AI &amp; Advanced Large Models — Assignment 2
+  &nbsp;·&nbsp; Prof. Yang Hu &nbsp;·&nbsp; Sessions 3–5
+</footer>
+
+<script>
+// ---- TAB SWITCHING ----
+function switchTab(group, id) {
+  document.querySelectorAll(`[id^="${group}-"]`).forEach(p => p.classList.remove('active'));
+  document.getElementById(`${group}-${id}`).classList.add('active');
+  event.target.closest('.tabs').querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  event.target.classList.add('active');
+}
+
+// ---- FAILURE MODES DATA ----
+const failures = [
+  {
+    title: "MNAR Missingness", severity: "danger",
+    symptom: "Blind to specific fault modes",
+    cause: "Sensors fail during high-vibration fault events",
+    fix: "Missing indicator as feature; active probing during maintenance"
+  },
+  {
+    title: "Asymmetric Label Noise", severity: "danger",
+    symptom: "High precision but low recall for rare faults",
+    cause: "Maintenance experts miss subtle early-stage degradation",
+    fix: "Confident learning + re-review of low-confidence predictions"
+  },
+  {
+    title: "Aliasing / Under-Sampling", severity: "warn",
+    symptom: "Learns spurious low-frequency patterns",
+    cause: "Vibration sampling below 2.5× Nyquist for bearing defect frequencies",
+    fix: "Hardware fix: anti-alias filter; ensure f_s ≥ 2.5× max fault frequency"
+  },
+  {
+    title: "Covariate Shift", severity: "warn",
+    symptom: "High confidence but wrong predictions on new routes",
+    cause: "Training from temperate climate; deployment includes desert/arctic ops",
+    fix: "MMD monitoring + importance weighting + human review triggers"
+  },
+  {
+    title: "Long-Tail Blindness", severity: "warn",
+    symptom: "Predicts only majority fault class",
+    cause: "ERM optimization favors frequent faults; HPC stall = 0.03% of events",
+    fix: "Decoupled training + safety-weighted loss function"
+  },
+  {
+    title: "Calibration Drift", severity: "info",
+    symptom: "Gradual performance decay over months",
+    cause: "Sensor aging, environmental degradation of thermocouple accuracy",
+    fix: "Online drift detection (ADWIN) + auto-recalibration schedule"
+  }
+];
+
+const severityColors = { danger: 'var(--danger)', warn: 'var(--warn)', info: 'var(--accent)' };
+
+const fm = document.getElementById('failureModes');
+failures.forEach((f, i) => {
+  fm.innerHTML += `
+  <div class="failure-card" onclick="toggleFailure(${i})">
+    <div class="failure-header">
+      <div style="display:flex;align-items:center;gap:0.75rem">
+        <div class="failure-title">${f.title}</div>
+        <span class="badge" style="background:rgba(255,255,255,0.05);border-color:${severityColors[f.severity]};color:${severityColors[f.severity]}">${f.severity.toUpperCase()}</span>
+      </div>
+      <span class="chevron" id="chev${i}">▾</span>
+    </div>
+    <div class="failure-body" id="fb${i}">
+      <div class="failure-row">
+        <div><div class="failure-col-label">Symptom</div><div class="failure-col-val">${f.symptom}</div></div>
+        <div><div class="failure-col-label">Root Cause</div><div class="failure-col-val">${f.cause}</div></div>
+        <div><div class="failure-col-label">Engineering Fix</div><div class="failure-col-val">${f.fix}</div></div>
+      </div>
+    </div>
+  </div>`;
+});
+
+function toggleFailure(i) {
+  const b = document.getElementById(`fb${i}`);
+  const c = document.getElementById(`chev${i}`);
+  b.classList.toggle('open');
+  c.classList.toggle('open');
+}
+
+// ---- QUALITY DETAIL ----
+const qDetails = {
+  completeness: { label: "COMPLETENESS · Threshold: >95% non-missing", text: "Critical sensors show 94.7% completeness on vib_sensor2 — <strong>below threshold</strong>. Missingness mechanism: MNAR (sensor fails during high-vibration fault events). Solution: add missing indicator as feature; active probing during scheduled maintenance checks. Never delete MNAR samples." },
+  consistency: { label: "CONSISTENCY · Pairwise calibration drift < 5%/1000hrs", text: "4 EGT sensors drifting independently over 500 hrs → false 'hot streak' alarms. 3 drift events detected via rolling Z-score flagging. Fix: GNN consistency + physics recalibration during stable cruise phase. Use ADWIN for gradual drift, CUSUM for rapid shifts." },
+  accuracy: { label: "ACCURACY · Label agreement κ = 0.68 (Good, not Excellent)", text: "κ=0.68 indicates 'Good' inter-annotator agreement. Disagreement concentrated in early-stage outer race defect cases — these are the critical ambiguous faults. Action: 3rd expert adjudication for ambiguous cases; track per-class noise rates." },
+  timeliness: { label: "TIMELINESS · f_s ≥ 2.5 × f_max (Nyquist + safety margin)", text: "Vibration at 25.6 kHz sampling. BPFO bearing frequencies at 100–500 Hz → need 2.5 kHz minimum ✓. Blade crack at 0.5–2 kHz → need 10 kHz ✓. 25.6 kHz provides full coverage with margin. Undersampling = IRREVERSIBLE frequency loss — no algorithm recovers aliased data." },
+  relevance: { label: "RELEVANCE · I(X;Y) > 0.3 bits — Mutual Information", text: "Before vibration: H(fault) = 2.5 bits (8 fault modes). After: H(fault|vib) = 0.8 bits. Vibration provides I = 1.7 bits — eliminates 6 out of 8 fault hypotheses. Top features: oil_debris_count (1.21 bits), kurtosis (0.82 bits), vib_crest (0.76 bits). Temperature: only 0.08 bits — low relevance for crack detection." }
+};
+function showQualityDetail(key) {
+  const d = qDetails[key];
+  document.getElementById('qualityDetailLabel').textContent = d.label;
+  document.getElementById('qualityDetailText').innerHTML = d.text;
+  document.getElementById('qualityDetail').style.display = 'block';
+}
+
+// ---- MI CHART ----
+const miData = [
+  { label: "Oil debris count", val: 1.21, pct: 100, color: "var(--accent)" },
+  { label: "Kurtosis (vib)", val: 0.82, pct: 68, color: "var(--accent)" },
+  { label: "vib3_crest", val: 0.76, pct: 63, color: "var(--accent)" },
+  { label: "vib1_RMS", val: 0.65, pct: 54, color: "var(--accent3)" },
+  { label: "vib2_RMS", val: 0.45, pct: 37, color: "var(--accent3)" },
+  { label: "Temperature", val: 0.08, pct: 7, color: "var(--text-dimmer)" },
+];
+const miChart = document.getElementById('miChart');
+miData.forEach(d => {
+  miChart.innerHTML += `
+  <div class="metric-bar-item">
+    <div class="metric-bar-label">${d.label}</div>
+    <div class="metric-bar-track"><div class="metric-bar-fill" style="width:${d.pct}%;background:${d.color}" data-width="${d.pct}"></div></div>
+    <div class="metric-bar-val">${d.val} bits</div>
+  </div>`;
+});
+
+// ---- RESULTS CHART ----
+const results = [
+  { label: "Fault Recall (Before)", val: 12, max: 100, color: "var(--danger)" },
+  { label: "Fault Recall (After)", val: 78, max: 100, color: "var(--success)" },
+  { label: "MAE Before (hrs / max 50)", val: 96, max: 100, color: "var(--danger)" },
+  { label: "MAE After (hrs / max 50)", val: 58, max: 100, color: "var(--success)" },
+];
+const rc = document.getElementById('resultsChart');
+results.forEach(d => {
+  rc.innerHTML += `
+  <div class="metric-bar-item">
+    <div class="metric-bar-label">${d.label}</div>
+    <div class="metric-bar-track"><div class="metric-bar-fill" style="width:0%;background:${d.color}" data-width="${d.val}"></div></div>
+    <div class="metric-bar-val">${d.label.includes('MAE') ? (d.val===96?'48 hrs':'29 hrs') : d.val+'%'}</div>
+  </div>`;
+});
+
+// ---- ANIMATED COUNTERS ----
+function animateCounter(el, target, duration=1500) {
+  const isFloat = String(target).includes('.');
+  let start = null;
+  const step = timestamp => {
+    if (!start) start = timestamp;
+    const progress = Math.min((timestamp - start) / duration, 1);
+    const eased = 1 - Math.pow(1 - progress, 3);
+    const val = eased * target;
+    el.textContent = isFloat ? val.toFixed(1) : Math.floor(val);
+    if (progress < 1) requestAnimationFrame(step);
+    else el.textContent = isFloat ? target.toFixed(1) : target;
+  };
+  requestAnimationFrame(step);
+}
+
+// ---- INTERSECTION OBSERVER ----
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      // Animate metric bars
+      entry.target.querySelectorAll('.metric-bar-fill[data-width]').forEach(bar => {
+        setTimeout(() => { bar.style.width = bar.dataset.width + '%'; }, 200);
+      });
+      // Animate counters
+      entry.target.querySelectorAll('.counter[data-target]').forEach(c => {
+        animateCounter(c, parseFloat(c.dataset.target));
+      });
+      observer.unobserve(entry.target);
+    }
+  });
+}, { threshold: 0.2 });
+
+document.querySelectorAll('section').forEach(s => observer.observe(s));
+
+// ---- NAV ACTIVE on SCROLL ----
+window.addEventListener('scroll', () => {
+  const nav = document.getElementById('nav');
+  nav.classList.toggle('scrolled', window.scrollY > 40);
+
+  const sections = ['scenario','part1','part2','part3','rec','refs'];
+  let current = '';
+  sections.forEach(id => {
+    const el = document.getElementById(id);
+    if (el && window.scrollY >= el.offsetTop - 100) current = id;
+  });
+  document.querySelectorAll('.nav-links a').forEach(a => {
+    a.classList.toggle('active', a.getAttribute('href') === '#' + current);
+  });
+});
+</script>
+</body>
+</html>
